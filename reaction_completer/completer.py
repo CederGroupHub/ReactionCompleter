@@ -163,13 +163,14 @@ class ReactionCompleter(object):
             ([eE](?P<exp>[-+]?\d+))?    # Exponential
             """, re.VERBOSE)
 
-    def nicely_print_float(self, f_s):
+    @staticmethod
+    def nicely_print_float(f_s):
         """
         Print a float number nicely.
         :param f_s: string of the float number.
         :return:
         """
-        m = self._FLOAT_RE.match(f_s)
+        m = ReactionCompleter._FLOAT_RE.match(f_s)
         if not m:
             raise ValueError('This is not a float!')
 
@@ -191,14 +192,16 @@ class ReactionCompleter(object):
 
         return floating_number
 
-    def simplify_print(self, expr: sympy.Expr):
+    @staticmethod
+    def simplify_print(expr: sympy.Expr):
         if isinstance(expr, sympy.Float):
             # Just a float number.
-            return self.nicely_print_float(str(expr.round(self.FLOAT_ROUND)))
+            return ReactionCompleter.nicely_print_float(
+                str(expr.round(ReactionCompleter.FLOAT_ROUND)))
         elif isinstance(expr, sympy.Add):
             expression = ''
             for i, ele in enumerate(expr.args):
-                ele_str = self.simplify_print(ele)
+                ele_str = ReactionCompleter.simplify_print(ele)
 
                 if ele_str == '0':
                     continue
@@ -222,7 +225,7 @@ class ReactionCompleter(object):
 
             exps = []
             for arg in expr.as_ordered_factors():
-                exp = self.simplify_print(arg)
+                exp = ReactionCompleter.simplify_print(arg)
                 if exp == '0':
                     return '0'
                 if exp != '1':
@@ -456,8 +459,8 @@ def balance_recipe(precursors, targets, sentences=None):
                 'elements': comp['elements'],
             })
         return MaterialInformation(
-            material_dict['material_formula'],
             material_dict['material_string'],
+            material_dict['material_formula'],
             compositions, sub_dict)
 
     precursor_objects = []
@@ -488,7 +491,8 @@ def balance_recipe(precursors, targets, sentences=None):
             for sentence in sentences:
                 candidates = []
                 for precursor in precursor_objects:
-                    if precursor.material_string in sentence:
+                    # TODO: using precursor.material_string will generate less reactions...
+                    if precursor.material_formula in sentence:
                         candidates.append(precursor)
                 if candidates:
                     precursor_candidates.append(candidates)

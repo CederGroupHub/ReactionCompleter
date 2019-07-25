@@ -1,3 +1,5 @@
+from tokenize import TokenError
+
 from reaction_completer.errors import FormulaException
 from reaction_completer.periodic_table import NON_VOLATILE_ELEMENTS, ELEMENTS
 from sympy.parsing.sympy_parser import parse_expr
@@ -73,7 +75,7 @@ class MaterialInformation(object):
         for component in self.material_composition:
             try:
                 fraction = parse_expr(component['amount'])
-            except SyntaxError:
+            except (SyntaxError, TokenError):
                 raise FormulaException(
                     'Sympy cannot parse component molar fraction: %s'
                     % component['amount'])
@@ -83,7 +85,7 @@ class MaterialInformation(object):
 
                 try:
                     amount = parse_expr(amount_s)
-                except SyntaxError:
+                except (SyntaxError, TokenError):
                     raise FormulaException(
                         'Sympy cannot parse element amount: %s'
                         % amount_s)

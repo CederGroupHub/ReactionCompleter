@@ -13,6 +13,7 @@ from reaction_completer.material import MaterialInformation
 from reaction_completer.errors import (
     StupidRecipe, ExpressionPrintException, TooManyPrecursors,
     CannotBalance, FormulaException)
+from reaction_completer.periodic_table import ELEMENTS
 
 __author__ = 'Haoyan Huo'
 __maintainer__ = 'Haoyan Huo'
@@ -336,6 +337,65 @@ class ReactionCompleter(object):
         return self._render_reaction(solution)
 
 
+ions_regex = re.compile('|'.join(sorted(ELEMENTS, key=lambda x: (-len(x), x))))
+OMIT_IONS = {'O', 'H', 'N'}
+
+
+def find_ions(string):
+    return ions_regex.findall(string)
+
+
+def render_reaction(precursors, target, reaction, element_substitution):
+    left_strings = []
+    for material, amount in reaction['left'].items():
+        left_strings.append('%s %s' % (amount, material))
+    right_strings = []
+    for material, amount in reaction['right'].items():
+        right_strings.append('%s %s' % (amount, material))
+
+    reaction_string = ' + '.join(left_strings) + ' == ' + ' + '.join(right_strings)
+
+    if len(element_substitution) > 0:
+        subs_string = ', '.join(['%s = %s' % (sub, subs)
+                                 for (sub, subs) in element_substitution.items()])
+        reaction_string += '; ' + subs_string
+
+    # Populate additives
+    if target['additives']:
+        additive_ions = set(find_ions(' '.join(target['additives'])))
+        added_anions = set()
+        additive_precursors = []
+
+        for precursor in precursors:
+            compositions = []
+            for comp in precursor['composition']:
+                compositions.append({
+                    'amount': comp['amount'],
+                    'elements': comp['elements'],
+                })
+
+            try:
+                mat_info = MaterialInformation(
+                    precursor['material_string'],
+                    precursor['material_formula'],
+                    compositions)
+
+                if mat_info.all_elements and \
+                        any(x in additive_ions for x in mat_info.all_elements):
+                    added_anions.update(mat_info.all_elements)
+                    additive_precursors.append(precursor['material_formula'])
+            except FormulaException:
+                pass
+
+        reaction_string += ' ; target %s with additives %s via %s' % (
+            target['material_formula'],
+            ', '.join(target['additives']),
+            ', '.join(sorted(additive_precursors))
+        )
+
+    return reaction_string
+
+
 def balance_recipe(precursors, targets, sentences=None):
     """
     Balance a recipe extracted using synthesis project pipeline.
@@ -366,6 +426,17 @@ def balance_recipe(precursors, targets, sentences=None):
     >>>             {
     >>>                 "formula": "Al2O3",
     >>>                 "elements": {"Al": "2.0", "O": "3.0"},
+    >>>                 "amount": "1.0"
+    >>>             }
+    >>>         ],
+    >>>     },
+    >>>     {
+    >>>         "material_formula": "MnO",
+    >>>         "material_string": "MnO",
+    >>>         "composition": [
+    >>>             {
+    >>>                 "formula": "MnO",
+    >>>                 "elements": {"Mn": "1.0", "O": "1.0"},
     >>>                 "amount": "1.0"
     >>>             }
     >>>         ],
@@ -418,10 +489,11 @@ def balance_recipe(precursors, targets, sentences=None):
     >>>         "elements_vars": {
     >>>             "A": ["Fe", "Al"]
     >>>         },
+    >>>         "additives": ["Mn2+"]
     >>>     },
     >>> ]
     >>> text = [
-    >>>     "SrCO3, Al2O3 and Fe2O3 are used to synthesize Sr6(A2O4)6, A=Fe, Al.",
+    >>>     "SrCO3, Al2O3, MnO and Fe2O3 are used to synthesize Mn2+doped-Sr6(A2O4)6, A=Fe, Al.",
     >>>     "Milling media is ZrO2",
     >>>     "There is some H2O found in the final product."
     >>> ]
@@ -482,7 +554,11 @@ def balance_recipe(precursors, targets, sentences=None):
             completer = ReactionCompleter(precursor_objects, target_object)
             solution = completer.compute_reactions()
             solutions.append((
-                target_object.material_formula, solution, substitution))
+                target_object.material_formula,
+                solution,
+                substitution,
+                render_reaction(precursors, target, solution, substitution)
+            ))
         except TooManyPrecursors as e:
             # try eliminate the precursors not in the same sentence.
             precursor_candidates = []
@@ -509,7 +585,12 @@ def balance_recipe(precursors, targets, sentences=None):
                     try:
                         completer = ReactionCompleter(candidates, target_object)
                         solution = completer.compute_reactions()
-                        solutions.append((target_object.material_formula, solution, substitution))
+                        solutions.append((
+                            target_object.material_formula,
+                            solution,
+                            substitution,
+                            render_reaction(precursors, target, solution, substitution)
+                        ))
                         success = True
                         break
                     except (CannotBalance, TokenError) as e_subset:

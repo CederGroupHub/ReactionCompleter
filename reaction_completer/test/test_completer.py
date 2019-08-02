@@ -32,6 +32,17 @@ class TestElementSubstitution(TestCase):
                 ],
             },
             {
+                "material_formula": "MnO",
+                "material_string": "MnO",
+                "composition": [
+                    {
+                        "formula": "MnO",
+                        "elements": {"Mn": "1.0", "O": "1.0"},
+                        "amount": "1.0"
+                    }
+                ],
+            },
+            {
                 "material_formula": "Fe2O3",
                 "material_string": "Fe2O3",
                 "composition": [
@@ -79,10 +90,11 @@ class TestElementSubstitution(TestCase):
                 "elements_vars": {
                     "A": ["Fe", "Al"]
                 },
+                "additives": ["Mn2+"]
             },
         ]
         text = [
-            "SrCO3, Al2O3 and Fe2O3 are used to synthesize Sr6(A2O4)6, A=Fe, Al.",
+            "SrCO3, Al2O3, MnO and Fe2O3 are used to synthesize Mn2+doped-Sr6(A2O4)6, A=Fe, Al.",
             "Milling media is ZrO2",
             "There is some H2O found in the final product."
         ]
@@ -94,13 +106,15 @@ class TestElementSubstitution(TestCase):
                     'left': {'SrCO3': '6', 'Fe2O3': '6'},
                     'right': {'Sr6(A2O4)6': '1', 'CO2': '6'}
                 },
-                {'A': 'Fe'}
+                {'A': 'Fe'},
+                '6 SrCO3 + 6 Fe2O3 == 1 Sr6(A2O4)6 + 6 CO2; A = Fe ; target Sr6(A2O4)6 with additives Mn2+ via MnO'
             ),
             (
                 'Sr6(A2O4)6', {
                     'left': {'SrCO3': '6', 'Al2O3': '6'},
                     'right': {'Sr6(A2O4)6': '1', 'CO2': '6'}
                 },
-                {'A': 'Al'}
+                {'A': 'Al'},
+                '6 SrCO3 + 6 Al2O3 == 1 Sr6(A2O4)6 + 6 CO2; A = Al ; target Sr6(A2O4)6 with additives Mn2+ via MnO'
             )
         ])

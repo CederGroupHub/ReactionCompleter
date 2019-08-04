@@ -3,6 +3,63 @@ from unittest import TestCase
 from reaction_completer import balance_recipe
 
 
+class TestSimple(TestCase):
+    def test_basic_completer(self):
+        """
+        BaCO3 + TiO2 ==== BaTiO3 + CO2
+        """
+        precursors = [
+            {
+                "material_formula": "BaCO3",
+                "material_string": "BaCO3",
+                "composition": [
+                    {
+                        "formula": "BaCO3",
+                        "elements": {"Ba": "1.0", "C": "1.0", "O": "3.0"},
+                        "amount": "1.0"
+                    }
+                ],
+            },
+            {
+                "material_formula": "TiO2",
+                "material_string": "TiO2",
+                "composition": [
+                    {
+                        "formula": "TiO2",
+                        "elements": {"Ti": "1.0", "O": "2.0"},
+                        "amount": "1.0"
+                    }
+                ],
+            },
+        ]
+        targets = [
+            {
+                "material_formula": "BaTiO3",
+                "material_string": "BaTiO3",
+                "composition": [
+                    {
+                        "formula": "BaTiO3",
+                        "elements": {"Ba": "1.0", "Ti": "1.0", "O": "3.0"},
+                        "amount": "1.0"
+                    }
+                ],
+                "elements_vars": {},
+                "additives": []
+            },
+        ]
+
+        reactions = balance_recipe(precursors, targets)
+        self.assertListEqual(reactions, [(
+            'BaTiO3',
+            {
+                'left': {'BaCO3': '1', 'TiO2': '1'},
+                'right': {'BaTiO3': '1', 'CO2': '1'}
+            },
+            None,
+            '1 BaCO3 + 1 TiO2 == 1 BaTiO3 + 1 CO2'
+        )])
+
+
 class TestElementSubstitution(TestCase):
     def test_simple(self):
         """
@@ -107,7 +164,7 @@ class TestElementSubstitution(TestCase):
                     'right': {'Sr6(A2O4)6': '1', 'CO2': '6'}
                 },
                 {'A': 'Fe'},
-                '6 SrCO3 + 6 Fe2O3 == 1 Sr6(A2O4)6 + 6 CO2; A = Fe ; target Sr6(A2O4)6 with additives Mn2+ via MnO'
+                '6 Fe2O3 + 6 SrCO3 == 1 Sr6(A2O4)6 + 6 CO2; A = Fe ; target Sr6(A2O4)6 with additives Mn2+ via MnO'
             ),
             (
                 'Sr6(A2O4)6', {
@@ -115,6 +172,6 @@ class TestElementSubstitution(TestCase):
                     'right': {'Sr6(A2O4)6': '1', 'CO2': '6'}
                 },
                 {'A': 'Al'},
-                '6 SrCO3 + 6 Al2O3 == 1 Sr6(A2O4)6 + 6 CO2; A = Al ; target Sr6(A2O4)6 with additives Mn2+ via MnO'
+                '6 Al2O3 + 6 SrCO3 == 1 Sr6(A2O4)6 + 6 CO2; A = Al ; target Sr6(A2O4)6 with additives Mn2+ via MnO'
             )
         ])

@@ -345,12 +345,19 @@ def find_ions(string):
     return ions_regex.findall(string)
 
 
-def render_reaction(precursors, target, reaction, element_substitution):
+def render_reaction(precursors, target, reaction, element_substitution=None):
+    element_substitution = element_substitution or {}
+
     left_strings = []
-    for material, amount in reaction['left'].items():
+    # Alphabetic ordering for left part
+    for material, amount in sorted(reaction['left'].items()):
         left_strings.append('%s %s' % (amount, material))
     right_strings = []
-    for material, amount in reaction['right'].items():
+    # Alphabetic ordering for right part, except
+    # for target material it's the first element
+    for material, amount in sorted(
+            reaction['right'].items(),
+            key=lambda x: (x[0] != target['material_formula'], x[0], x[1])):
         right_strings.append('%s %s' % (amount, material))
 
     reaction_string = ' + '.join(left_strings) + ' == ' + ' + '.join(right_strings)

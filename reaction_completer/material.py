@@ -1,8 +1,9 @@
 from tokenize import TokenError
 
+from sympy.parsing.sympy_parser import parse_expr
+
 from reaction_completer.errors import FormulaException
 from reaction_completer.periodic_table import NON_VOLATILE_ELEMENTS, ELEMENTS
-from sympy.parsing.sympy_parser import parse_expr
 
 __author__ = 'Haoyan Huo'
 __maintainer__ = 'Haoyan Huo'
@@ -44,26 +45,54 @@ class MaterialInformation(object):
         to be made; or a dictionary containing the substitution of
         elements in the material_composition dictionary.
         """
+
+        # Type checks
+        if not isinstance(material_string, str):
+            raise TypeError('material_string must be a string, got %r' % type(material_string))
+        if not isinstance(material_formula, str):
+            raise TypeError('material_formula must be a string, got %r' % type(material_formula))
+
         if not isinstance(material_composition, (list, tuple)):
             material_composition = [material_composition]
 
-        self.material_composition = material_composition
-
         # Ensure the composition has right data types
-        for composition in self.material_composition:
+        all_elements = set()
+        for composition in material_composition:
             if set(composition.keys()) != {'amount', 'elements'}:
-                raise ValueError('Illegal composition dictionary. '
+                raise ValueError('Illegal composition dictionary %r. '
                                  'You should only put keys "amount" '
-                                 'and "elements"')
+                                 'and "elements"' % set(composition.keys()))
             if not isinstance(composition['amount'], str):
                 composition['amount'] = str(composition['amount'])
 
             for element, amount in composition['elements'].items():
+                all_elements.add(element)
+                if not isinstance(element, str):
+                    raise TypeError('composition.elements keys must be str, got %r' % type(element))
                 if not isinstance(amount, str):
                     composition['elements'][element] = str(amount)
 
+        substituted_elements = set()
+        if substitution_dict is not None:
+            if not isinstance(substitution_dict, dict):
+                raise TypeError('substitution_dict must be a dict, got %r' % type(substitution_dict))
+            for from_element, to_element in substitution_dict.items():
+                if not isinstance(from_element, str):
+                    raise TypeError('substitution_dict keys must be strings, got %r' % type(from_element))
+                if not isinstance(to_element, str):
+                    raise TypeError('substitution_dict values must be strings, got %r' % type(to_element))
+                if from_element not in all_elements:
+                    raise ValueError('substitution_dict keys must be in composition.elements, got %s' % from_element)
+                substituted_elements.add(from_element)
+                if to_element not in ELEMENTS:
+                    raise ValueError('substitution_dict values must be chemical elements, got %s' % to_element)
+        for element in all_elements - substituted_elements:
+            if element not in ELEMENTS:
+                raise ValueError('composition.elements has non-chemical, non-substitutional element: %s' % element)
+
         self.material_string = material_string
         self.material_formula = material_formula
+        self.material_composition = material_composition
         self.substitution_dict = substitution_dict or {}
 
         self.non_volatile_elements = {}

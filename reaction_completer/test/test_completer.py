@@ -13,6 +13,17 @@ class TestSimple(TestReaction):
             '1 BaCO3 + 1 TiO2 == 1 BaTiO3 + 1 CO2'
         ])
 
+    def test_h2o(self):
+        reactions = self.balance_equation([
+            ("C4H6CuO4·H2O", "C4H6CuO4·H2O", "1.0-C:4+H:6+Cu:1+O:4;1.0-H:2+O:1"),
+            ("Cr2O3", "Cr2O3", "1-Cr:2+O:3"),
+        ], [
+            ("CuCrO2", "CuCrO2", "1-Cr:1+Cu:1+O:2"),
+        ])
+        self.assertReactionsEqual(reactions, [
+            '1 C4H6CuO4·H2O + 0.5 Cr2O3 + 3.75 O2 == 1 CuCrO2 + 4 CO2 + 4 H2O'
+        ])
+
 
 class TestElementSubstitution(TestReaction):
     def test_simple(self):

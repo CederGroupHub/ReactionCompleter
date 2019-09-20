@@ -1,7 +1,7 @@
 import re
 from unittest import TestCase
 
-from reaction_completer import balance_recipe
+from reaction_completer.driver import balance_recipe
 
 
 def simple_parse(composition_string):

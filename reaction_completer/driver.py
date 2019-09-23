@@ -1,4 +1,6 @@
 import logging
+import re
+from collections import defaultdict
 from functools import reduce
 from operator import or_
 from tokenize import TokenError
@@ -70,10 +72,15 @@ def try_balance(precursors_to_balance, target, substitution, all_precursors):
 
 
 def find_precursors_in_same_sentence(precursors_to_balance, sentences):
-    # try eliminate the precursors not in the same sentence.
+    """
+    Try to eliminate the precursors not in the same sentence.
+    Also finds sets that don't come from a material name (such as manganese nitrates).
+    """
     precursor_candidates = []
 
-    # Find the list of precursors that are in the same sentence
+    def is_word_material(m):
+        return bool(re.match(r'^[\w\s()]+$', m.material_string))
+
     for sentence in sentences:
         candidates = []
         for precursor in precursors_to_balance:
@@ -82,6 +89,33 @@ def find_precursors_in_same_sentence(precursors_to_balance, sentences):
                 candidates.append(precursor)
         if candidates:
             precursor_candidates.append(candidates)
+
+    # Find the list of precursors that are in the same sentence
+    for sentence in sentences:
+        candidates = []
+        for precursor in precursors_to_balance:
+            if precursor.material_string in sentence:
+                candidates.append(precursor)
+        if candidates:
+            precursor_candidates.append(candidates)
+
+            # Make a copy of materials that don't come from English words
+            # if a similar material has been found.
+            materials_by_chemistry = defaultdict(list)
+            for p in candidates:
+                materials_by_chemistry[tuple(sorted(p.all_elements))].append(p)
+
+            for chemistry in set(materials_by_chemistry):
+                materials = materials_by_chemistry[chemistry]
+                if len(materials) > 1:
+                    materials_by_chemistry[chemistry] = [x for x in materials if not is_word_material(x)]
+                    if not materials_by_chemistry[chemistry]:
+                        materials_by_chemistry[chemistry] = materials
+
+            candidates_no_words = []
+            for i in materials_by_chemistry.values():
+                candidates_no_words.extend(i)
+            precursor_candidates.append(candidates_no_words)
 
     return precursor_candidates
 

@@ -88,7 +88,7 @@ class MaterialInformation(object):
                     raise ValueError('substitution_dict values must be chemical elements, got %s' % to_element)
         for element in all_elements - substituted_elements:
             if element not in ELEMENTS:
-                raise ValueError('composition.elements has non-chemical, non-substitutional element: %s' % element)
+                raise FormulaException('composition.elements has non-chemical, non-substitutional element: %s' % element)
 
         self.material_string = material_string
         self.material_formula = material_formula

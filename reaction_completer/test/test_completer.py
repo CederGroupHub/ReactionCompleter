@@ -45,7 +45,7 @@ class TestSolutionBased(TestReaction):
 
 
 class TestSimple(TestReaction):
-    def test_basic_completer(self):
+    def test_carbonate(self):
         reactions = self.balance_equation([
             ("BaCO3", "BaCO3", "Ba:1.0+C:1.0+O:3.0"),
             ("TiO2", "TiO2", "Ti:1.0+O:2.0"),

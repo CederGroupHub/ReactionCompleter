@@ -7,10 +7,25 @@ from reaction_completer.driver import balance_recipe
 def simple_parse(composition_string):
     """
     Parse compact composition strings such as:
-    1.0-D:1.0+C:1.0+O:3.0;
-    2.0-Fe:2.0+O:3.0?
+
+    '''
+    1.0--D:1.0+C:1.0+O:3.0;
+    2.0--Fe:2.0+O:3.0?
     D:K,Na;E:O,H<
     Na+&K+
+    '''
+
+    Rules:
+    1. Whitespaces will be ignored.
+    2. The entire string is formatted as:
+        "COMPOSITIONS ? SUBSTITUTIONS < ADDITIVES"
+    3. COMPOSITIONS is separated into components using semicolon ";"
+    4. Each component can have an optional prefix "amount--"
+    5. Each component will contain a list of elements separated by "+"
+    6. Each element has an optional postfix ":amount"
+    7. Substitutions are made by parts separated by semicolon ";"
+    8. Each substitution is "Var:value1,value2..."
+    9. Additives are separated by and "&"
     """
     composition_string = re.sub(r'\s', '', composition_string)
 
@@ -29,10 +44,18 @@ def simple_parse(composition_string):
     compositions = composition_string.split(';')
     material_composition = []
     for composition in compositions:
-        comp_amount, elements = composition.split('-')
+        parts = composition.split('--', maxsplit=1)
+        if len(parts) == 1:
+            comp_amount, elements = '1.0', parts[0]
+        else:
+            comp_amount, elements = parts
         elements_dict = {}
         for pair in elements.split('+'):
-            element, amount = pair.split(':')
+            parts = pair.split(':', maxsplit=1)
+            if len(parts) == 1:
+                element, amount = parts[0], '1.0'
+            else:
+                element, amount = parts
             elements_dict[element] = amount
         material_composition.append({
             'amount': comp_amount,

@@ -88,7 +88,8 @@ class MaterialInformation(object):
                     raise ValueError('substitution_dict values must be chemical elements, got %s' % to_element)
         for element in all_elements - substituted_elements:
             if element not in ELEMENTS:
-                raise FormulaException('composition.elements has non-chemical, non-substitutional element: %s' % element)
+                raise FormulaException(
+                    'composition.elements has non-chemical, non-substitutional element: %s' % element)
 
         self.material_string = material_string
         self.material_formula = material_formula
@@ -169,20 +170,96 @@ class MaterialInformation(object):
     def all_elements(self):
         return self.nv_elements | self.v_elements
 
+    @staticmethod
+    def _compare_composition(comp1, comp2):
+        if comp1.keys() != comp2.keys() or len(comp1) == 0:
+            return False
+        scaling = set()
+        for k in comp1:
+            try:
+                value1, value2 = float(comp1[k]), float(comp2[k])
+            except ValueError:
+                return False
+            scaling.add(value1 / value2)
+        return len(scaling) == 1
+
+    def _component_search_helper(self, target_comp, exclude_nv=False):
+        for comp in self.material_composition:
+            if exclude_nv:
+                subset = {x: y for x, y in comp['elements'].items() if x not in NON_VOLATILE_ELEMENTS}
+            else:
+                subset = comp['elements']
+            if self._compare_composition(subset, target_comp):
+                return True
+        return False
+
+    _COMP_WATER = {'H': 2, 'O': 1}
+
+    @property
+    def has_water(self):
+        return self._component_search_helper(self._COMP_WATER)
+
+    _COMP_ACETATE = {'C': 2, 'H': 3, 'O': 2}
+    _COMP_ACETATE_CHARGED = {'C': 2, 'H': 3, 'O': 2, 'e-': 1}
+
+    @property
+    def has_acetate(self):
+        return self._component_search_helper(
+            self._COMP_ACETATE, exclude_nv=True)
+
+    _COMP_NITRATE = {'N': 1, 'O': 3}
+    _COMP_NITRATE_CHARGED = {'N': 1, 'O': 3, 'e-': 1}
+
+    @property
+    def has_nitrate(self):
+        return self._component_search_helper(
+            self._COMP_NITRATE, exclude_nv=True)
+
+    _COMP_HYDROXIDE = {'H': 1, 'O': 1}
+    _COMP_HYDROXIDE_CHARGED = {'H': 1, 'O': 1, 'e-': 1}
+
+    @property
+    def has_hydroxide(self):
+        return self._component_search_helper(
+            self._COMP_HYDROXIDE, exclude_nv=True)
+
+    _COMP_CARBONATE = {'C': 1, 'O': 3}
+
+    @property
+    def has_carbonate(self):
+        return self._component_search_helper(
+            self._COMP_CARBONATE, exclude_nv=True)
+
     @property
     def decompose_chemicals(self):
         decompose = {}
-        if 'C' in self.v_elements and 'O' in self.v_elements:
+
+        def add_solution_chemicals():
+            decompose['[OH-]'] = self._COMP_HYDROXIDE_CHARGED
+            decompose['H2O'] = self._COMP_WATER
+
+        # Find whether there are water or not
+        if self.has_water:
+            decompose['H2O'] = self._COMP_WATER
+
+        if self.has_acetate:
+            decompose['[CH3COO-]'] = self._COMP_ACETATE_CHARGED
+            add_solution_chemicals()
+
+        if self.has_nitrate:
+            decompose['[NO3-]'] = self._COMP_NITRATE_CHARGED
+            add_solution_chemicals()
+
+        if self.has_hydroxide:
+            decompose['[OH-]'] = self._COMP_HYDROXIDE_CHARGED
+            add_solution_chemicals()
+
+        if self.has_carbonate:
             decompose['CO2'] = {'C': 1, 'O': 2}
+
         # FIXME: material_string is different from material_formula! How to better determine decompose chemicals?
         if 'NH4' in self.material_formula:
             decompose['NH3'] = {'H': 3, 'N': 1}
-        if 'NO3' in self.material_formula:
-            decompose['NO2'] = {'O': 2, 'N': 1}
-        if any(x['elements'] == {'H': 2.0, 'O': 1.0} for x in self.material_composition):
-            decompose['H2O'] = {'H': 2, 'O': 1}
-        if 'H' in self.other_elements:
-            decompose['H2O'] = {'H': 2, 'O': 1}
 
         return decompose
 
@@ -190,6 +267,12 @@ class MaterialInformation(object):
     def exchange_chemicals(self):
         absorption = {}
 
+        # This justifies the usage of O2 for oxide synthesis
+        # For any oxides, elements may be oxidized or reduced by
+        # O2 or H2, or any other gases during synthesis. However
+        # Almost at all times we may write the reducing/oxidizing
+        # using only O2: if O2 appears at the LHS, the element is
+        # oxidized, if O2 appears at the RHS, the element is reduced.
         if 'O' in self.v_elements:
             absorption['O2'] = {'O': 2}
 

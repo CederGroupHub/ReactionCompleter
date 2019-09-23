@@ -101,7 +101,9 @@ class ReactionCompleter(object):
         all_elements = reduce(
             or_,
             [x.all_elements for x in self._precursor_candidates] +
-            [self.target.all_elements])
+            [self.target.all_elements] +
+            [set(x) for x in self._exchange_chemicals.values()] +
+            [set(x) for x in self._decomposition_chemicals.values()])
         all_elements = sorted(list(all_elements))
 
         # Create the symbols that will be used for linear eq.

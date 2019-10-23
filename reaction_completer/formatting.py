@@ -99,6 +99,8 @@ def simplify_print(expr: sympy.Expr):
         return expr.name
     elif isinstance(expr, sympy.Integer):
         return str(expr.p)
+    elif isinstance(expr, sympy.Rational):
+        return simplify_print(expr.evalf())
     else:
         raise ExpressionPrintException(
             'Do not know how to print %r: %r' % (type(expr), expr))

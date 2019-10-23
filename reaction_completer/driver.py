@@ -4,7 +4,7 @@ from collections import defaultdict
 from functools import reduce
 from operator import or_
 from tokenize import TokenError
-
+from nltk.metrics.distance import edit_distance
 from reaction_completer import ReactionCompleter
 from reaction_completer.errors import (
     TooManyPrecursors, CannotBalance, FormulaException)
@@ -84,11 +84,16 @@ def find_precursors_in_same_sentence(precursors_to_balance, sentences):
     for sentence in sentences:
         candidates = []
         for precursor in precursors_to_balance:
-            # TODO: using precursor.material_string will generate less reactions...
             if precursor.material_formula in sentence:
                 candidates.append(precursor)
         if candidates:
             precursor_candidates.append(candidates)
+
+        candidates_no_conversion = [
+            x for x in candidates
+            if edit_distance(x.material_formula, x.material_string) < len(x.material_string) * 0.5]
+        if candidates_no_conversion:
+            precursor_candidates.append(candidates_no_conversion)
 
     # Find the list of precursors that are in the same sentence
     for sentence in sentences:
@@ -96,6 +101,13 @@ def find_precursors_in_same_sentence(precursors_to_balance, sentences):
         for precursor in precursors_to_balance:
             if precursor.material_string in sentence:
                 candidates.append(precursor)
+
+        candidates_no_conversion = [
+            x for x in candidates
+            if edit_distance(x.material_formula, x.material_string) < len(x.material_string) * 0.5]
+        if candidates_no_conversion:
+            precursor_candidates.append(candidates_no_conversion)
+
         if candidates:
             precursor_candidates.append(candidates)
 

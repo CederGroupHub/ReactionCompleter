@@ -6,7 +6,7 @@ import sympy
 from sympy import Matrix, symbols
 
 from reaction_completer.errors import (
-    StupidRecipe, TooManyPrecursors, CannotBalance)
+    StupidRecipe, TooManyPrecursors, TooFewPrecursors)
 from reaction_completer.formatting import simplify_print
 from reaction_completer.material import MaterialInformation
 
@@ -233,6 +233,6 @@ class ReactionCompleter(object):
 
             solution = solution.T[:1, :]
         except ValueError:
-            raise CannotBalance('Too few precursors to balance')
+            raise TooFewPrecursors('Too few precursors to balance')
 
         return self._render_reaction(solution)

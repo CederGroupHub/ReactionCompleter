@@ -12,7 +12,7 @@ __all__ = ['NON_VOLATILE_ELEMENTS', 'ELEMENTS', 'PT', 'PT_LIST']
 
 NON_VOLATILE_ELEMENTS = {
     'Li', 'Be',
-    'Na', 'Mg', 'Al', 'Si',
+    'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl',
     'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As',
     'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te',
     'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf',

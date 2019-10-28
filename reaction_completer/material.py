@@ -193,6 +193,10 @@ class MaterialInformation(object):
                 return True
         return False
 
+    @property
+    def is_hco(self):
+        return self.all_elements == {'C', 'H', 'O'}
+
     _COMP_WATER = {'H': 2, 'O': 1}
 
     @property
@@ -229,6 +233,14 @@ class MaterialInformation(object):
     def has_carbonate(self):
         return self._component_search_helper(
             self._COMP_CARBONATE, exclude_nv=True)
+
+    _COMP_AMMONIUM = {'H': 4, 'N': 1}
+    _COMP_AMMONIUM_CHARGED = {'H': 4, 'N': 1, 'e-': -1}
+
+    @property
+    def has_ammonium(self):
+        return self._component_search_helper(
+            self._COMP_AMMONIUM, exclude_nv=True)
 
     @property
     def decompose_chemicals(self):

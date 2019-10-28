@@ -7,7 +7,8 @@ from tokenize import TokenError
 from nltk.metrics.distance import edit_distance
 from reaction_completer import ReactionCompleter
 from reaction_completer.errors import (
-    TooManyPrecursors, CannotBalance, FormulaException)
+    TooFewPrecursors, TooManyPrecursors,
+    CannotBalance, FormulaException)
 from reaction_completer.formatting import render_reaction
 from reaction_completer.material import MaterialInformation
 
@@ -260,6 +261,17 @@ def balance_recipe(precursors, targets, sentences=None):
         try:
             solution = try_balance(precursors_to_balance, target, substitution, precursors)
             solutions.append(solution)
+        except TooFewPrecursors:
+            precursor_candidates = list(filter(lambda x: not x.is_hco, precursors_to_balance))
+            try:
+                solution = try_balance(precursor_candidates, target, substitution, precursors)
+                solutions.append(solution)
+            except (CannotBalance, TokenError) as e_subset:
+                logging.debug(
+                    'Failed trying inorganic precursor subset for target: %s, '
+                    'precursors: %r: %r',
+                    target_object.material_formula,
+                    [x.material_formula for x in precursor_candidates], e_subset)
         except TooManyPrecursors as e:
             precursor_candidates = find_precursors_in_same_sentence(precursors_to_balance, sentences)
 

@@ -20,6 +20,13 @@ class CannotBalance(Exception):
     pass
 
 
+class TooFewPrecursors(CannotBalance):
+    """
+    Too few precursors cannot be balanced.
+    """
+    pass
+
+
 class TooManyPrecursors(CannotBalance):
     """
     Too many precursors cannot be balanced. For example:

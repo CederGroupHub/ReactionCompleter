@@ -201,7 +201,14 @@ class MaterialInformation(object):
 
     @property
     def has_water(self):
-        return self._component_search_helper(self._COMP_WATER)
+        has_combined_water = self._component_search_helper(self._COMP_WATER)
+
+        has_hydrogen = False
+        for comp in self.material_composition:
+            if 'H' in comp['elements']:
+                has_hydrogen = True
+
+        return has_combined_water or has_hydrogen
 
     _COMP_ACETATE = {'C': 2, 'H': 3, 'O': 2}
     _COMP_ACETATE_CHARGED = {'C': 2, 'H': 3, 'O': 2, 'e-': 1}

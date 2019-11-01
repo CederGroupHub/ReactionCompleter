@@ -43,6 +43,20 @@ class TestSolutionBased(TestReaction):
             '1 LiFeO2-Li2MnO3 + 22 H2O + 5 [NO3-]'
         ])
 
+    def test_ammonia(self):
+        reactions = self.balance_equation([
+            ('Li(COOCH3)', 'Li(COOCH3)', 'Li+C:2+O:2+H:3'),
+            ('Mn(COOCH3)2·H2O', 'Mn(COOCH3)2·H2O', 'Mn+C:4+O:4+H:6;H:2+O'),
+            ('NH4H2PO4', 'NH4H2PO4', 'N:1+H:6+P+O:4')
+        ], [
+            ('LiMnPO4', 'LiMnPO4', 'Li+Mn+P+O:4')
+        ])
+
+        self.assertReactionsEqual(reactions, [
+            '1 Li(COOCH3) + 1 Mn(COOCH3)2·H2O + 1 NH4H2PO4 + 3 [OH-] == '
+            '1 LiMnPO4 + 4 H2O + 1 NH3 + 3 [CH3COO-]'
+        ])
+
 
 class TestSimple(TestReaction):
     def test_carbonate(self):

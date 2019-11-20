@@ -255,7 +255,8 @@ def balance_recipe(precursors, targets, sentences=None):
         try:
             # Skip if substitution is bad
             target_object = material_dict_to_info(target, substitution)
-        except FormulaException:
+        except FormulaException as e:
+            logging.debug('Failed to convert target! %r', e)
             continue
 
         try:

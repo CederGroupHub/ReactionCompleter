@@ -73,11 +73,12 @@ class ReactionCompleter(object):
                     precursor.material_formula)
                 continue
 
-            if len(precursor.nv_elements - self.target.nv_elements) > 0:
+            excessive = precursor.nv_elements - self.target.nv_elements
+            if len(excessive) > 0:
                 logging.debug(
                     'Skipping precursor %s because it '
-                    'has excessive chemical elements',
-                    precursor.material_formula)
+                    'has excessive chemical elements %r',
+                    precursor.material_formula, excessive)
                 continue
 
             self._precursor_candidates.append(precursor)

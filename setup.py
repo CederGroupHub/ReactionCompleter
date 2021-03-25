@@ -8,7 +8,7 @@ if __name__ == "__main__":
     setup(
         name='ReactionCompleter',
         version="0.0.1",
-        python_requires='>=3.4',
+        python_requires='>=3.6',
         author=__author__,
         author_email=__email__,
         packages=find_packages(),
